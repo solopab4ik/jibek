@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Панель управления{% endblock %}
+{% block content %}
+<div style="max-width:400px;margin:40px auto">
+<div class="form-card">
+  <div class="form-title">Панель</div>
+  <div class="form-sub">Только для администраторов</div>
+  <form method="post">
+    <div class="form-group"><label>Логин</label><input type="text" name="username" autocomplete="username"></div>
+    <div class="form-group"><label>Пароль</label><input type="password" name="password" autocomplete="current-password"></div>
+    <button class="btn btn-dark btn-full" type="submit" style="padding:14px">Войти</button>
+  </form>
+</div>
+</div>
+{% endblock %}

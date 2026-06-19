@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Избранное — Jibek{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:32px">
+  <div class="page-header" style="margin-bottom:0">
+    <h1>Избранное</h1>
+    <p>{{ shoes|length }} товар(а)</p>
+  </div>
+  <a href="/" class="btn btn-outline btn-sm">← В каталог</a>
+</div>
+{% if shoes %}
+<div class="grid">
+{% for s in shoes %}
+  {% set imgs = get_images(s) %}
+  <div style="position:relative">
+    <a class="card" href="/shoe/{{ s.id }}">
+      <div class="card-img-wrap">
+        {% if imgs %}<img class="card-img" src="/static/uploads/{{ imgs[0] }}" alt="{{ s.name }}" loading="lazy">
+        {% else %}<div class="card-img-placeholder">👟</div>{% endif %}
+        {% if s.old_price %}
+          <div style="position:absolute;top:10px;left:10px;background:#ef4444;color:#fff;
+                      font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px">СКИДКА</div>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        {% if s.brand %}<div class="card-brand">{{ s.brand }}</div>{% endif %}
+        <div class="card-name">{{ s.name }}</div>
+        <div class="card-bottom">
+          <div>
+            <span class="card-price">{% if s.price %}{{ s.price }} ₸{% endif %}</span>
+            {% if s.old_price %}<span style="color:var(--muted);font-size:.78rem;text-decoration:line-through;margin-left:6px">{{ s.old_price }} ₸</span>{% endif %}
+          </div>
+        </div>
+      </div>
+    </a>
+    <button class="fav-btn active" onclick="toggleFav({{ s.id }}, this)">❤️</button>
+  </div>
+{% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon">♡</div>
+  <p>Ничего не добавлено в избранное</p>
+  <a href="/" class="btn btn-dark" style="margin-top:16px">← В каталог</a>
+</div>
+{% endif %}
+{% endblock %}

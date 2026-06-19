@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — Jibek{% endblock %}
+{% block content %}
+<div style="max-width:440px;margin:40px auto">
+<div class="form-card">
+  <div class="form-title">Регистрация</div>
+  <div class="form-sub">Создай аккаунт чтобы делать заказы</div>
+  <form method="post">
+    <div class="form-group">
+      <label>Имя</label>
+      <input type="text" name="name" placeholder="Как тебя зовут?" autocomplete="name">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="example@mail.com" required autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" name="password" placeholder="Минимум 6 символов" required autocomplete="new-password">
+    </div>
+    <button class="btn btn-dark btn-full" type="submit" style="padding:14px;font-size:1rem;margin-bottom:18px">Создать аккаунт</button>
+    <p style="text-align:center;color:var(--muted);font-size:.9rem">Уже есть аккаунт? <a href="/login" class="form-link">Войти</a></p>
+  </form>
+</div>
+</div>
+{% endblock %}

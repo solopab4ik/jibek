@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Панель — Jibek{% endblock %}
+{% block content %}
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+  <div><h1>Панель</h1><p>{{ session.admin }}</p></div>
+  <div style="display:flex;gap:10px">
+    <a href="/admin/add" class="btn btn-dark">+ Товар</a>
+    <a href="/admin/logout" class="btn btn-outline btn-sm">Выйти</a>
+  </div>
+</div>
+
+<!-- СТАТИСТИКА -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-val">{{ shoes|length }}</div>
+    <div class="stat-label">Товаров</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">{{ orders|length }}</div>
+    <div class="stat-label">Всего заказов</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">{{ new_cnt.c }}</div>
+    <div class="stat-label">Новых заказов</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">{{ users.cnt }}</div>
+    <div class="stat-label">Покупателей</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">{{ (revenue.s or 0)|int }} ₸</div>
+    <div class="stat-label">Выручка (выполнено)</div>
+  </div>
+  <div class="stat">
+    <div class="stat-val">{{ reviews|length }}</div>
+    <div class="stat-label">Отзывов</div>
+  </div>
+</div>
+
+<div class="tabs">
+  <a class="tab active" href="#" onclick="showTab('orders',this);return false">📦 Заказы</a>
+  <a class="tab" href="#" onclick="showTab('catalog',this);return false">👟 Каталог</a>
+  <a class="tab" href="#" onclick="showTab('revtab',this);return false">⭐ Отзывы</a>
+</div>
+
+<!-- ЗАКАЗЫ -->
+<div id="orders">
+{% if orders %}
+  {% for o in orders %}
+  <div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-num">Заказ #{{ o.id }}</div>
+        <div class="order-date">
+          {{ o.created_at[:16] }} · {{ o.user_email }}{% if o.user_name %} · {{ o.user_name }}{% endif %}
+        </div>
+        {% if o.phone %}<div class="order-date">📞 {{ o.phone }}{% if o.city %} · 📍 {{ o.city }}{% endif %}</div>{% endif %}
+      </div>
+      <span class="status-badge s-{{ o.status }}">{{ o.status }}</span>
+    </div>
+    <div class="order-items">{{ o.items }}</div>
+    {% if o.comment %}<div style="color:var(--muted);font-size:.85rem;margin-top:6px">💬 {{ o.comment }}</div>{% endif %}
+    <div class="order-total" style="margin-top:8px">{{ o.total }} ₸</div>
+
+    <!-- ИСТОРИЯ -->
+    {% if history[o.id] %}
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span style="font-size:.75rem;color:var(--muted);font-weight:600">История:</span>
+      {% for h in history[o.id] %}
+        <span style="font-size:.72rem;color:var(--muted)">{{ h.status }} <span style="opacity:.5">{{ h.changed_at[:10] }}</span></span>
+        {% if not loop.last %}<span style="color:var(--muted2)">→</span>{% endif %}
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+      <form method="post" action="/admin/order/{{ o.id }}/status" style="display:flex;gap:8px">
+        <select name="status" style="padding:8px 12px;font-size:.85rem;border-radius:8px;
+                border:1.5px solid var(--border);background:var(--input-bg);color:var(--text)">
+          {% for s in ['новый','обработка','доставка','выполнен'] %}
+            <option value="{{ s }}" {% if o.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+        <button class="btn btn-outline btn-sm" type="submit">Обновить</button>
+      </form>
+      <form method="post" action="/admin/order/delete/{{ o.id }}"
+            onsubmit="return confirm('Удалить заказ #{{ o.id }}?')">
+        <button class="btn btn-danger btn-sm" type="submit">🗑 Удалить</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty"><div class="empty-icon">📦</div><p>Заказов нет</p></div>
+{% endif %}
+</div>
+
+<!-- КАТАЛОГ -->
+<div id="catalog" style="display:none">
+  <div style="margin-bottom:16px"><a href="/admin/add" class="btn btn-dark btn-sm">+ Добавить товар</a></div>
+  {% if shoes %}
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Фото</th><th>Название</th><th>Бренд</th><th>Категория</th><th>Размер</th><th>Цена</th><th>Скидка</th><th></th></tr></thead>
+    <tbody>
+    {% for s in shoes %}
+    {% set imgs = get_images(s) %}
+    <tr>
+      <td>{% if imgs %}<img class="thumb" src="/static/uploads/{{ imgs[0] }}">
+          {% else %}<div class="thumb" style="display:flex;align-items:center;justify-content:center;font-size:1.4rem">👟</div>{% endif %}</td>
+      <td><a href="/shoe/{{ s.id }}" style="color:var(--text);text-decoration:none;font-weight:500">{{ s.name }}</a></td>
+      <td style="color:var(--muted)">{{ s.brand or '—' }}</td>
+      <td style="color:var(--muted)">{{ s.category or '—' }}</td>
+      <td style="color:var(--muted)">{{ s.size or '—' }}</td>
+      <td style="font-weight:600">{{ (s.price + ' ₸') if s.price else '—' }}</td>
+      <td>{% if s.old_price %}<span style="color:#ef4444;font-size:.8rem;font-weight:600">{{ s.old_price }} ₸</span>{% else %}<span style="color:var(--muted2)">—</span>{% endif %}</td>
+      <td><div class="td-actions">
+        <a href="/admin/edit/{{ s.id }}" class="btn btn-outline btn-sm">✏️</a>
+        <form method="post" action="/admin/delete/{{ s.id }}" onsubmit="return confirm('Удалить?')">
+          <button class="btn btn-danger btn-sm">🗑</button>
+        </form>
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty"><div class="empty-icon">👟</div><p><a href="/admin/add" class="form-link">Добавить первый товар</a></p></div>
+  {% endif %}
+</div>
+
+<!-- ОТЗЫВЫ -->
+<div id="revtab" style="display:none">
+{% if reviews %}
+  {% for r in reviews %}
+  <div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-num">{{ r.user_name }}</div>
+        <div class="order-date">{{ r.created_at[:16] }}{% if r.shoe_name %} · <a href="/shoe/{{ r.shoe_id }}" style="color:var(--muted);text-decoration:none">{{ r.shoe_name }}</a>{% endif %}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="color:#f59e0b;font-size:1rem">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</span>
+        <form method="post" action="/review/delete/{{ r.id }}" onsubmit="return confirm('Удалить отзыв?')">
+          <button class="btn btn-danger btn-sm">🗑</button>
+        </form>
+      </div>
+    </div>
+    <div class="order-items">{{ r.text }}</div>
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty"><div class="empty-icon">⭐</div><p>Отзывов пока нет</p></div>
+{% endif %}
+</div>
+
+<script>
+function showTab(id,el){
+  event.preventDefault();
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['orders','catalog','revtab'].forEach(t=>{ document.getElementById(t).style.display='none'; });
+  document.getElementById(id).style.display='block';
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Корзина — Jibek{% endblock %}
+{% block content %}
+<div class="page-header">
+  <h1>Корзина</h1>
+  <p>{{ items|length }} товар(а)</p>
+</div>
+{% if items %}
+<div class="cart-layout">
+  <div>
+    {% for i in items %}
+    {% set imgs = get_images(i) %}
+    <div class="cart-item">
+      <div class="cart-thumb">
+        {% if imgs %}<img src="/static/uploads/{{ imgs[0] }}" alt="">{% else %}👟{% endif %}
+      </div>
+      <div class="cart-info">
+        <div class="cart-name">{{ i.name }}</div>
+        {% if i.brand %}<div class="cart-brand">{{ i.brand }}</div>{% endif %}
+        <div class="cart-price-line">
+          {{ (i.price|int) * i.quantity }} ₸
+          {% if i.old_price %}
+            <span style="color:var(--muted);font-size:.8rem;text-decoration:line-through;margin-left:6px">{{ i.old_price }} ₸</span>
+          {% endif %}
+        </div>
+        <form method="post" action="/cart/update/{{ i.cid }}">
+          <div class="qty-wrap">
+            <button class="qty-btn" type="submit" name="quantity" value="{{ i.quantity - 1 }}">−</button>
+            <span class="qty-num">{{ i.quantity }}</span>
+            <button class="qty-btn" type="submit" name="quantity" value="{{ i.quantity + 1 }}">+</button>
+          </div>
+        </form>
+      </div>
+      <form method="post" action="/cart/remove/{{ i.cid }}">
+        <button class="btn btn-outline btn-sm" type="submit" style="padding:8px 10px;color:var(--muted)">✕</button>
+      </form>
+    </div>
+    {% endfor %}
+    <a href="/" class="btn btn-outline" style="margin-top:8px">← Продолжить покупки</a>
+  </div>
+  <div class="cart-summary">
+    <div class="summary-title">Итого</div>
+    {% for i in items %}
+    <div class="summary-row">
+      <span style="color:var(--muted)">{{ i.name }} × {{ i.quantity }}</span>
+      <span>{{ (i.price|int)*i.quantity }} ₸</span>
+    </div>
+    {% endfor %}
+    <div class="summary-total"><span>К оплате</span><span>{{ total }} ₸</span></div>
+    <a href="/checkout" class="btn btn-dark btn-full" style="margin-top:20px;padding:14px;font-size:1rem">Оформить заказ</a>
+  </div>
+</div>
+{% else %}
+<div class="empty">
+  <div class="empty-icon">🛍</div>
+  <p>Корзина пустая</p>
+  <a href="/" class="btn btn-dark" style="margin-top:16px">← В каталог</a>
+</div>
+{% endif %}
+{% endblock %}

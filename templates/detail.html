@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}{{ shoe.name }} — Jibek{% endblock %}
+{% block content %}
+<a href="/" class="back">← Назад</a>
+
+{% set imgs = get_images(shoe) %}
+<div class="detail-grid">
+  <!-- ГАЛЕРЕЯ -->
+  <div class="gallery">
+    <div class="gallery-main">
+      {% if imgs %}
+        <img src="/static/uploads/{{ imgs[0] }}" alt="{{ shoe.name }}" id="mainImg">
+      {% else %}👟{% endif %}
+    </div>
+    {% if imgs|length > 1 %}
+    <div class="gallery-thumbs">
+      {% for img in imgs %}
+        <div class="gallery-thumb {% if loop.first %}active{% endif %}"
+             onclick="switchImg('/static/uploads/{{ img }}', this)">
+          <img src="/static/uploads/{{ img }}" alt="">
+        </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ИНФО -->
+  <div>
+    {% if shoe.brand %}<div class="detail-brand">{{ shoe.brand }}</div>{% endif %}
+    <h1 class="detail-name">{{ shoe.name }}</h1>
+
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:20px;flex-wrap:wrap">
+      {% if shoe.price %}<div class="detail-price" style="margin-bottom:0">{{ shoe.price }} ₸</div>{% endif %}
+      {% if shoe.old_price %}
+        <div style="color:var(--muted);font-size:1.1rem;text-decoration:line-through">{{ shoe.old_price }} ₸</div>
+        <div style="background:#ef4444;color:#fff;font-size:.72rem;font-weight:700;
+                    padding:3px 10px;border-radius:20px">СКИДКА</div>
+      {% endif %}
+    </div>
+
+    {% if avg_rating %}
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+      <span style="color:#f59e0b;font-size:1.1rem">{{ '★' * avg_rating|int }}{{ '☆' * (5 - avg_rating|int) }}</span>
+      <span style="color:var(--muted);font-size:.875rem">{{ reviews|length }} отзыв(а)</span>
+    </div>
+    {% endif %}
+
+    <div class="detail-meta">
+      {% if shoe.category %}<div class="meta-row"><span class="meta-label">Категория</span><span>{{ shoe.category }}</span></div>{% endif %}
+      {% if shoe.size %}<div class="meta-row"><span class="meta-label">Размер</span><span>{{ shoe.size }}</span></div>{% endif %}
+    </div>
+
+    {% if shoe.description %}<div class="detail-desc">{{ shoe.description }}</div>{% endif %}
+
+    <div class="detail-actions">
+      {% set user = current_user() %}
+      {% if user %}
+        <form method="post" action="/cart/add/{{ shoe.id }}">
+          <button class="btn btn-dark" type="submit" style="padding:14px 32px;font-size:1rem">🛍 В корзину</button>
+        </form>
+        <button class="btn btn-outline fav-btn-detail {% if is_fav %}active{% endif %}"
+                onclick="toggleFavDetail({{ shoe.id }}, this)"
+                style="padding:14px 20px;font-size:1.2rem;border-radius:8px">
+          {% if is_fav %}❤️{% else %}♡{% endif %}
+        </button>
+      {% else %}
+        <a href="/login" class="btn btn-dark" style="padding:14px 32px;font-size:1rem">Войди чтобы купить</a>
+      {% endif %}
+      {% if is_admin() %}
+        <a href="/admin/edit/{{ shoe.id }}" class="btn btn-outline btn-sm">✏️</a>
+        <form method="post" action="/admin/delete/{{ shoe.id }}" onsubmit="return confirm('Удалить?')">
+          <button class="btn btn-danger btn-sm">🗑</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ОТЗЫВЫ -->
+<div style="margin-top:48px;border-top:1px solid var(--border);padding-top:36px">
+  <h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;margin-bottom:24px">
+    Отзывы {% if reviews %}<span style="color:var(--muted);font-size:1rem;font-weight:400">({{ reviews|length }})</span>{% endif %}
+  </h2>
+
+  {% set user = current_user() %}
+  {% if user %}
+  <div style="background:var(--card2);border-radius:14px;padding:24px;margin-bottom:28px;border:1px solid var(--border)">
+    <div style="font-weight:600;margin-bottom:16px">Оставить отзыв</div>
+    <form method="post" action="/review/add/{{ shoe.id }}">
+      <div class="form-group">
+        <label>Оценка</label>
+        <div style="display:flex;gap:8px;margin-bottom:4px">
+          {% for i in [1,2,3,4,5] %}
+          <label style="cursor:pointer;text-transform:none;letter-spacing:0;font-size:1.4rem;color:var(--muted2)">
+            <input type="radio" name="rating" value="{{ i }}" style="display:none"
+                   {% if i==5 %}checked{% endif %}
+                   onchange="updateStars({{ i }})">
+            <span class="star" data-val="{{ i }}">★</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Комментарий</label>
+        <textarea name="text" placeholder="Расскажи о качестве, размере, доставке..." style="min-height:80px" required></textarea>
+      </div>
+      <button class="btn btn-dark btn-sm" type="submit">Отправить отзыв</button>
+    </form>
+  </div>
+  {% endif %}
+
+  {% if reviews %}
+    {% for r in reviews %}
+    <div style="padding:20px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <span style="font-weight:600">{{ r.user_name }}</span>
+          <span style="color:var(--muted);font-size:.8rem;margin-left:10px">{{ r.created_at[:10] }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="color:#f59e0b">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</span>
+          {% if is_admin() or (current_user() and current_user().id == r.user_id) %}
+          <form method="post" action="/review/delete/{{ r.id }}" onsubmit="return confirm('Удалить?')">
+            <button class="btn btn-danger btn-sm" type="submit" style="padding:3px 8px;font-size:.75rem">🗑</button>
+          </form>
+          {% endif %}x
+        </div>
+      </div>
+      <div style="color:var(--text);font-size:.925rem;line-height:1.6">{{ r.text }}</div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div style="text-align:center;padding:32px;color:var(--muted)">
+      <div style="font-size:2rem;margin-bottom:8px">⭐</div>
+      <p>Отзывов пока нет — будь первым!</p>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+function switchImg(src, thumb){
+  document.getElementById('mainImg').src=src;
+  document.querySelectorAll('.gallery-thumb').forEach(t=>t.classList.remove('active'));
+  thumb.classList.add('active');
+}
+function toggleFavDetail(sid, btn){
+  fetch('/favorite/toggle/'+sid,{method:'POST'})
+  .then(r=>{ if(r.status===401){window.location.href='/login';return;} return r.json(); })
+  .then(d=>{ if(!d)return; if(d.status==='added'){btn.classList.add('active');btn.textContent='❤️';}
+             else{btn.classList.remove('active');btn.textContent='♡';} });
+}
+function updateStars(val){
+  document.querySelectorAll('.star').forEach(s=>{
+    s.style.color = parseInt(s.dataset.val) <= val ? '#f59e0b' : 'var(--muted2)';
+  });
+}
+// init stars
+updateStars(5);
+</script>
+{% endblock %}

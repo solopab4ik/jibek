@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Jibek{% endblock %}
+{% block content %}
+<a href="/admin" class="back">← Назад</a>
+<div class="form-card" style="max-width:640px;margin:0 auto">
+  <div class="form-title">{{ title }}</div>
+  <form method="post" enctype="multipart/form-data" id="shoeForm">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Название *</label>
+        <input type="text" name="name" value="{{ shoe.name if shoe else '' }}" required placeholder="Air Max 97">
+      </div>
+      <div class="form-group">
+        <label>Бренд</label>
+        <input type="text" name="brand" value="{{ shoe.brand if shoe else '' }}" placeholder="Nike">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Категория</label>
+        <input type="text" name="category" value="{{ shoe.category if shoe else '' }}" placeholder="Кроссовки">
+      </div>
+      <div class="form-group">
+        <label>Размер(ы)</label>
+        <input type="text" name="size" value="{{ shoe.size if shoe else '' }}" placeholder="38–43">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Цена (₸)</label>
+      <input type="text" name="price" value="{{ shoe.price if shoe else '' }}" placeholder="24900">
+    </div>
+    <div class="form-group">
+      <label>Описание</label>
+      <textarea name="description" placeholder="Материал, сезон, особенности...">{{ shoe.description if shoe else '' }}</textarea>
+    </div>
+
+    <!-- ФОТО -->
+    <div class="form-group">
+      <label>Фотографии (можно несколько)</label>
+
+      {% if shoe %}
+        {% set imgs = get_images(shoe) %}
+        {% if imgs %}
+        <div style="margin-bottom:14px">
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Текущие фото — отметь чтобы удалить:</p>
+          <div class="preview-grid">
+            {% for img in imgs %}
+            <div class="preview-img">
+              <img src="/static/uploads/{{ img }}" alt="">
+              <label style="position:absolute;bottom:-6px;right:-6px;background:#ef4444;
+                            width:20px;height:20px;border-radius:50%;cursor:pointer;
+                            display:flex;align-items:center;justify-content:center;font-size:.7rem;color:#fff"
+                    title="Удалить">
+                <input type="checkbox" name="remove_photo" value="{{ img }}" style="display:none" onchange="this.parentElement.style.opacity=this.checked?'0.4':'1'">✕
+              </label>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+      {% endif %}
+
+      <div class="upload-area" id="dropArea">
+        <p>📸 Перетащи фото сюда или выбери файлы<br><span style="font-size:.75rem;color:var(--muted2)">Можно выбрать несколько сразу</span></p>
+        <input type="file" name="photos" accept="image/*" multiple id="fileInput"
+               style="display:none" onchange="previewFiles(this)">
+        <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('fileInput').click()">Выбрать файлы</button>
+        <button type="button" class="btn btn-outline btn-sm" onclick="openCamera()">📷 Камера</button>
+        <div class="preview-grid" id="previewGrid"></div>
+      </div>
+      <video id="video" style="display:none;width:100%;border-radius:10px;margin-top:10px" autoplay playsinline></video>
+      <div id="snapWrap" style="display:none;margin-top:10px;text-align:center">
+        <button type="button" class="btn btn-gold" onclick="snapPhoto()">📸 Снять</button>
+      </div>
+    </div>
+
+    <button class="btn btn-dark btn-full" type="submit" style="padding:14px;font-size:1rem">{{ title }} ✅</button>
+  </form>
+</div>
+
+<script>
+let stream; let b64list=[];
+
+function previewFiles(input){
+  Array.from(input.files).forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>addPreview(e.target.result, false);
+    r.readAsDataURL(f);
+  });
+}
+
+function addPreview(src, isCamera){
+  const grid=document.getElementById('previewGrid');
+  const wrap=document.createElement('div'); wrap.className='preview-img';
+  const img=document.createElement('img'); img.src=src; wrap.appendChild(img);
+  const del=document.createElement('button'); del.className='preview-del'; del.textContent='✕'; del.type='button';
+  del.onclick=()=>{ wrap.remove(); if(isCamera){ const i=b64list.indexOf(src); if(i>-1)b64list.splice(i,1); updateB64(); } };
+  wrap.appendChild(del); grid.appendChild(wrap);
+  if(isCamera){ b64list.push(src); updateB64(); }
+}
+
+function updateB64(){
+  document.querySelectorAll('input[name="photo_b64"]').forEach(e=>e.remove());
+  b64list.forEach(d=>{ const inp=document.createElement('input'); inp.type='hidden'; inp.name='photo_b64'; inp.value=d; document.getElementById('shoeForm').appendChild(inp); });
+}
+
+async function openCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    document.getElementById('video').srcObject=stream;
+    document.getElementById('video').style.display='block';
+    document.getElementById('snapWrap').style.display='block';
+  }catch(e){alert('Камера недоступна.');}
+}
+
+function snapPhoto(){
+  const v=document.getElementById('video'),c=document.createElement('canvas');
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0);
+  const data=c.toDataURL('image/jpeg',.85);
+  addPreview(data, true);
+}
+
+// drag & drop
+const area=document.getElementById('dropArea');
+area.addEventListener('dragover',e=>{e.preventDefault();area.style.borderColor='var(--gold)'});
+area.addEventListener('dragleave',()=>{area.style.borderColor='var(--border)'});
+area.addEventListener('drop',e=>{
+  e.preventDefault(); area.style.borderColor='var(--border)';
+  Array.from(e.dataTransfer.files).forEach(f=>{
+    const r=new FileReader(); r.onload=ev=>addPreview(ev.target.result,false); r.readAsDataURL(f);
+  });
+  // add to real input
+  const dt=new DataTransfer();
+  Array.from(e.dataTransfer.files).forEach(f=>dt.items.add(f));
+  document.getElementById('fileInput').files=dt.files;
+});
+</script>
+{% endblock %}

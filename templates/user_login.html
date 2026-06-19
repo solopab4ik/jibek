@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Вход — Jibek{% endblock %}
+{% block content %}
+<div style="max-width:440px;margin:40px auto">
+<div class="form-card">
+  <div class="form-title">Вход</div>
+  <div class="form-sub">Войди чтобы делать заказы и сохранять избранное</div>
+  <form method="post">
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" name="email" placeholder="example@mail.com" required autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" name="password" required autocomplete="current-password">
+    </div>
+    <button class="btn btn-dark btn-full" type="submit" style="padding:14px;font-size:1rem;margin-bottom:18px">Войти</button>
+    <p style="text-align:center;color:var(--muted);font-size:.9rem">Нет аккаунта? <a href="/register" class="form-link">Зарегистрироваться</a></p>
+    <hr class="form-divider">
+    <p style="text-align:center;color:var(--muted);font-size:.8rem">Администратор? <a href="/admin/login" class="form-link">Войти в панель</a></p>
+  </form>
+</div>
+</div>
+{% endblock %}

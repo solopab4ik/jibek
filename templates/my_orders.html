@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Мои заказы — Jibek{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:32px">
+  <div class="page-header" style="margin-bottom:0">
+    <h1>Мои заказы</h1>
+  </div>
+  <a href="/" class="btn btn-outline btn-sm">← В каталог</a>
+</div>
+{% if orders %}
+  {% for o in orders %}
+  <div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-num">Заказ #{{ o.id }}</div>
+        <div class="order-date">{{ o.created_at[:16] }}{% if o.city %} · {{ o.city }}{% endif %}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="status-badge s-{{ o.status }}">{{ o.status }}</span>
+        <form method="post" action="/order/delete/{{ o.id }}"
+              onsubmit="return confirm('Удалить заказ #{{ o.id }}?')">
+          <button class="btn btn-outline btn-sm" type="submit"
+                  style="padding:4px 10px;font-size:.75rem;color:var(--muted)">✕ Удалить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="order-items">{{ o.items }}</div>
+    <div class="order-total" style="margin-top:8px">{{ o.total }} ₸</div>
+
+    <!-- ИСТОРИЯ СТАТУСОВ -->
+    {% if history[o.id] %}
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:10px;font-weight:600">История</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        {% for h in history[o.id] %}
+        <div style="display:flex;align-items:center;gap:10px;font-size:.85rem">
+          <div style="width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                      background:{% if h.status=='выполнен' %}#22c55e{% elif h.status=='доставка' %}#a855f7{% elif h.status=='обработка' %}#f59e0b{% else %}#3b82f6{% endif %}"></div>
+          <span class="status-badge s-{{ h.status }}" style="font-size:.68rem;padding:2px 8px">{{ h.status }}</span>
+          <span style="color:var(--muted)">{{ h.changed_at[:16] }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty">
+  <div class="empty-icon">📦</div>
+  <p>Заказов пока нет</p>
+  <a href="/" class="btn btn-dark" style="margin-top:16px">← В каталог</a>
+</div>
+{% endif %}
+{% endblock %}

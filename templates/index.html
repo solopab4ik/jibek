@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+{% block title %}Jibek — Обувь из Турции{% endblock %}
+{% block content %}
+
+<!-- БАННЕР -->
+<div style="background:var(--text);color:var(--bg);border-radius:20px;padding:48px 40px;
+            margin-bottom:40px;position:relative;overflow:hidden">
+  <div style="position:relative;z-index:1">
+    <div style="font-size:.75rem;letter-spacing:3px;text-transform:uppercase;opacity:.5;margin-bottom:12px">Прямо из Турции</div>
+    <h1 style="font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;line-height:1.1;margin-bottom:16px">
+      Обувь<br><em style="color:var(--gold-banner);font-style:normal">с характером</em>
+    </h1>
+    <p style="opacity:.65;font-size:.95rem;margin-bottom:28px;max-width:380px;line-height:1.6">
+      Байеры в Турции — находим лучшее специально для вас. Свежие коллекции каждую неделю.
+    </p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <a href="#catalog" class="btn" style="background:var(--bg);color:var(--text);padding:13px 28px">Смотреть каталог</a>
+      <button class="btn" style="background:transparent;border:1.5px solid rgba(255,255,255,.15);
+        color:var(--bg);padding:13px 24px;opacity:.5;cursor:not-allowed">
+  📸 Найти по фото — скоро
+</button>
+    </div>
+  </div>
+  <div style="position:absolute;right:-10px;top:50%;transform:translateY(-50%);
+              font-size:10rem;opacity:.07;user-select:none;pointer-events:none">👟</div>
+</div>
+
+<!-- МОДАЛ ПОИСК ПО ФОТО -->
+<div id="photoModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+     z-index:500;align-items:center;justify-content:center;padding:16px">
+  <div style="background:var(--card);border-radius:20px;padding:32px;max-width:480px;width:100%;
+              position:relative;max-height:90vh;overflow-y:auto">
+    <button onclick="closePhotoSearch()"
+            style="position:absolute;top:14px;right:14px;background:var(--card2);border:none;
+                   width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:.9rem;color:var(--text)">✕</button>
+    <h2 style="font-family:'Playfair Display',serif;font-size:1.6rem;margin-bottom:6px">Поиск по фото</h2>
+    <p style="color:var(--muted);font-size:.875rem;margin-bottom:20px">
+      Загрузи скрин из TikTok или Telegram — AI найдёт похожую обувь в каталоге
+    </p>
+    <div id="dropArea"
+         style="border:2px dashed var(--border);border-radius:12px;padding:28px;text-align:center;
+                cursor:pointer;transition:.2s;margin-bottom:14px"
+         onclick="document.getElementById('photoInput').click()"
+         ondragover="event.preventDefault();this.style.borderColor='var(--text)'"
+         ondragleave="this.style.borderColor='var(--border)'"
+         ondrop="handleDrop(event)">
+      <div style="font-size:2.5rem;margin-bottom:8px">📸</div>
+      <div style="font-weight:500;margin-bottom:4px">Нажми или перетащи фото</div>
+      <div style="color:var(--muted2);font-size:.8rem">JPG, PNG, скриншот</div>
+    </div>
+    <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="handleFile(this)">
+    <img id="photoPreview" style="display:none;width:100%;max-height:180px;object-fit:contain;
+                                   border-radius:10px;margin-bottom:14px">
+    <button id="searchBtn" onclick="doSearch()" class="btn btn-dark btn-full"
+            style="padding:13px;display:none;margin-bottom:14px">🔍 Найти похожую обувь</button>
+    <div id="loadingMsg" style="display:none;text-align:center;padding:16px;color:var(--muted)">
+      <span style="font-size:1.4rem;animation:spin 1s linear infinite;display:inline-block">⟳</span>
+      <div style="margin-top:8px;font-size:.875rem">AI анализирует фото...</div>
+    </div>
+    <div id="searchResults" style="display:none">
+      <div id="searchDesc" style="color:var(--muted);font-size:.85rem;margin-bottom:10px"></div>
+      <div id="resultsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px"></div>
+      <div id="noFound" style="display:none;text-align:center;padding:20px;color:var(--muted);font-size:.9rem">
+        😔 Похожих товаров не нашлось
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- КАТАЛОГ -->
+<div id="catalog">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+    <div>
+      <h2 style="font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700">Каталог</h2>
+      <p style="color:var(--muted);font-size:.875rem;margin-top:4px">{{ shoes|length }} моделей</p>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button onclick="toggleFilters()" class="btn btn-outline btn-sm" id="filterToggle">
+        ⚙️ Фильтры {% if has_filters %}<span style="background:var(--text);color:var(--bg);border-radius:10px;padding:1px 6px;font-size:.7rem;margin-left:4px">●</span>{% endif %}
+      </button>
+      <button class="btn btn-outline btn-sm" style="opacity:.5;cursor:not-allowed" title="Скоро появится">📸 Скоро</button>
+    </div>
+  </div>
+
+  <!-- ПАНЕЛЬ ФИЛЬТРОВ -->
+  <div id="filtersPanel" style="display:{% if has_filters %}block{% else %}none{% endif %};
+       background:var(--card2);border:1px solid var(--border);border-radius:14px;
+       padding:20px;margin-bottom:20px">
+    <form method="get" action="/" id="filterForm">
+      {% if sel_cat %}<input type="hidden" name="category" value="{{ sel_cat }}">{% endif %}
+      {% if search %}<input type="hidden" name="search" value="{{ search }}">{% endif %}
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:16px">
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Бренд</label>
+          <select name="brand" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.875rem">
+            <option value="">Все бренды</option>
+            {% for b in brands %}
+              <option value="{{ b.brand }}" {% if brand==b.brand %}selected{% endif %}>{{ b.brand }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Размер</label>
+          <select name="size" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.875rem">
+            <option value="">Все размеры</option>
+            {% for s in sizes %}
+              <option value="{{ s.size }}" {% if size==s.size %}selected{% endif %}>{{ s.size }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Цена от (₸)</label>
+          <input type="number" name="price_from" value="{{ price_from }}" placeholder="0"
+                 style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.875rem">
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Цена до (₸)</label>
+          <input type="number" name="price_to" value="{{ price_to }}" placeholder="999999"
+                 style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.875rem">
+        </div>
+        <div>
+          <label style="display:block;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:6px">Сортировка</label>
+          <select name="sort" style="width:100%;padding:9px 12px;border-radius:8px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-size:.875rem">
+            <option value="newest" {% if sort=='newest' %}selected{% endif %}>Новые</option>
+            <option value="price_asc" {% if sort=='price_asc' %}selected{% endif %}>Цена ↑</option>
+            <option value="price_desc" {% if sort=='price_desc' %}selected{% endif %}>Цена ↓</option>
+            <option value="discount" {% if sort=='discount' %}selected{% endif %}>Скидки</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-dark btn-sm" type="submit">Применить</button>
+        <a href="/{% if sel_cat %}?category={{ sel_cat }}{% endif %}{% if search %}{% if sel_cat %}&{% else %}?{% endif %}search={{ search }}{% endif %}"
+           class="btn btn-outline btn-sm">Сбросить фильтры</a>
+      </div>
+    </form>
+  </div>
+
+  {% if cats %}
+  <div class="filters-bar">
+    <a href="/" class="cat-pill {% if not sel_cat %}active{% endif %}">Все</a>
+    {% for c in cats %}
+      <a href="/?category={{ c.category }}{% if search %}&search={{ search }}{% endif %}"
+         class="cat-pill {% if sel_cat==c.category %}active{% endif %}">{{ c.category }}</a>
+    {% endfor %}
+    {% if search %}<a href="/" class="cat-pill" style="margin-left:auto">✕ Сбросить</a>{% endif %}
+  </div>
+  {% endif %}
+
+  {% if shoes %}
+  <div class="grid">
+  {% for s in shoes %}
+    {% set imgs = get_images(s) %}
+    <div style="position:relative">
+      <a class="card" href="/shoe/{{ s.id }}">
+        <div class="card-img-wrap">
+          {% if imgs %}
+            <img class="card-img" src="{{ img_url(imgs[0]) }}" alt="{{ s.name }}" loading="lazy">
+          {% else %}
+            <div class="card-img-placeholder">👟</div>
+          {% endif %}
+          {% if s.old_price %}
+            <div style="position:absolute;top:10px;left:10px;background:#ef4444;color:#fff;
+                        font-size:.68rem;font-weight:700;padding:3px 9px;border-radius:20px;letter-spacing:.3px">СКИДКА</div>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          {% if s.brand %}<div class="card-brand">{{ s.brand }}</div>{% endif %}
+          <div class="card-name">{{ s.name }}</div>
+          <div class="card-bottom">
+            <div>
+              <span class="card-price">{% if s.price %}{{ s.price }} ₸{% endif %}</span>
+              {% if s.old_price %}
+                <span style="color:var(--muted);font-size:.78rem;text-decoration:line-through;margin-left:6px">{{ s.old_price }} ₸</span>
+              {% endif %}
+            </div>
+            {% if s.size %}<span class="card-size">{{ s.size }}</span>{% endif %}
+          </div>
+        </div>
+      </a>
+      <button class="fav-btn {% if s.id in favs %}active{% endif %}"
+              onclick="toggleFav({{ s.id }}, this)">
+        {% if s.id in favs %}❤️{% else %}♡{% endif %}
+      </button>
+    </div>
+  {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">
+    <div class="empty-icon">👟</div>
+    <p>{% if search %}Ничего не найдено по «{{ search }}»{% else %}Товаров пока нет{% endif %}</p>
+    {% if search %}<a href="/" class="btn btn-dark" style="margin-top:16px">Показать всё</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<style>
+:root{--gold-banner:#d4a843}
+[data-theme="dark"]{--gold-banner:#d4a843}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(max-width:600px){
+  div[style*="padding:48px"]{padding:28px 22px !important}
+  h1[style*="3rem"]{font-size:2rem !important}
+  #resultsGrid{grid-template-columns:repeat(2,1fr) !important}
+}
+</style>
+
+<script>
+let photoB64='';
+function openPhotoSearch(){
+  document.getElementById('photoModal').style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closePhotoSearch(){
+  document.getElementById('photoModal').style.display='none';
+  document.body.style.overflow='';
+  photoB64='';
+  document.getElementById('photoPreview').style.display='none';
+  document.getElementById('searchBtn').style.display='none';
+  document.getElementById('searchResults').style.display='none';
+  document.getElementById('loadingMsg').style.display='none';
+  document.getElementById('photoInput').value='';
+}
+function handleFile(input){
+  if(!input.files[0]) return;
+  const r=new FileReader();
+  r.onload=e=>{photoB64=e.target.result;showPreview(photoB64);};
+  r.readAsDataURL(input.files[0]);
+}
+function handleDrop(e){
+  e.preventDefault();
+  document.getElementById('dropArea').style.borderColor='var(--border)';
+  const f=e.dataTransfer.files[0];
+  if(!f) return;
+  const r=new FileReader();
+  r.onload=ev=>{photoB64=ev.target.result;showPreview(photoB64);};
+  r.readAsDataURL(f);
+}
+function showPreview(src){
+  const p=document.getElementById('photoPreview');
+  p.src=src;p.style.display='block';
+  document.getElementById('searchBtn').style.display='flex';
+  document.getElementById('searchResults').style.display='none';
+}
+async function doSearch(){
+  if(!photoB64)return;
+  document.getElementById('loadingMsg').style.display='block';
+  document.getElementById('searchBtn').style.display='none';
+  document.getElementById('searchResults').style.display='none';
+  const fd=new FormData();
+  fd.append('photo_b64',photoB64);
+  try{
+    const r=await fetch('/search-by-photo',{method:'POST',body:fd});
+    const d=await r.json();
+    document.getElementById('loadingMsg').style.display='none';
+    document.getElementById('searchResults').style.display='block';
+    if(!d.results||d.results.length===0){
+      document.getElementById('noFound').style.display='block';
+      document.getElementById('resultsGrid').innerHTML='';
+      document.getElementById('searchDesc').textContent='';
+      return;
+    }
+    document.getElementById('noFound').style.display='none';
+    document.getElementById('searchDesc').textContent=d.description?'🔍 '+d.description:'';
+    document.getElementById('resultsGrid').innerHTML=d.results.map(s=>`
+      <a href="/shoe/${s.id}" onclick="closePhotoSearch()" style="text-decoration:none;color:inherit">
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:.2s"
+             onmouseover="this.style.borderColor='var(--text)'"
+             onmouseout="this.style.borderColor='var(--border)'">
+          <div style="aspect-ratio:1;background:var(--card2);overflow:hidden;display:flex;align-items:center;justify-content:center">
+            ${s.image?`<img src="${s.image.startsWith('http')?s.image:'/static/uploads/'+s.image}" style="width:100%;height:100%;object-fit:cover">`:'<span style="font-size:2rem">👟</span>'}
+          </div>
+          <div style="padding:8px">
+            ${s.brand?`<div style="font-size:.7rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.brand}</div>`:''}
+            <div style="font-size:.82rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.name}</div>
+            ${s.price?`<div style="font-size:.82rem;font-weight:700;margin-top:2px">${s.price} ₸</div>`:''}
+          </div>
+        </div>
+      </a>`).join('');
+  }catch(e){
+    document.getElementById('loadingMsg').style.display='none';
+    document.getElementById('searchResults').style.display='block';
+    document.getElementById('noFound').style.display='block';
+    document.getElementById('noFound').textContent='⚠️ Ошибка — попробуй ещё раз';
+  }
+}
+document.getElementById('photoModal').addEventListener('click',function(e){if(e.target===this)closePhotoSearch();});
+
+function toggleFilters(){
+  const p=document.getElementById('filtersPanel');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+</script>
+{% endblock %}

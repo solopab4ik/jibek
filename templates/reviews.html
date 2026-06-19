@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Отзывы — Jibek{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:32px">
+  <div class="page-header" style="margin-bottom:0">
+    <h1>Отзывы</h1>
+    <p>{{ reviews|length }} отзыв(а) от покупателей</p>
+  </div>
+  <a href="/" class="btn btn-outline btn-sm">← В каталог</a>
+</div>
+
+{% if reviews %}
+  {% for r in reviews %}
+  <div class="order-card">
+    <div class="order-header">
+      <div>
+        <div class="order-num" style="font-size:1rem">{{ r.user_name }}</div>
+        {% if r.shoe_name %}
+          <div class="order-date">о товаре: <a href="/shoe/{{ r.sid }}" style="color:var(--text);text-decoration:underline">{{ r.shoe_name }}</a></div>
+        {% endif %}
+        <div class="order-date">{{ r.created_at[:10] }}</div>
+      </div>
+      <div style="color:#f59e0b;font-size:1.2rem">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</div>
+    </div>
+    <div style="font-size:.95rem;line-height:1.6;color:var(--text)">{{ r.text }}</div>
+    {% if is_admin() %}
+    <form method="post" action="/review/delete/{{ r.id }}" onsubmit="return confirm('Удалить?')" style="margin-top:10px">
+      <button class="btn btn-danger btn-sm" type="submit">🗑 Удалить</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="empty">
+  <div class="empty-icon">⭐</div>
+  <p>Отзывов пока нет — будь первым!</p>
+</div>
+{% endif %}
+{% endblock %}
