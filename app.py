@@ -446,6 +446,14 @@ def admin():
     revenue = cur.fetchone()
     cur.execute("SELECT COUNT(*) as c FROM jibek.orders WHERE status='новый'")
     new_cnt = cur.fetchone()
+    cur.execute("SELECT COUNT(*) as c FROM jibek.orders WHERE status='обработка'")
+    processing_cnt = cur.fetchone()
+    cur.execute("SELECT COUNT(*) as c FROM jibek.orders WHERE status='доставка'")
+    delivery_cnt = cur.fetchone()
+    cur.execute("SELECT COUNT(*) as c FROM jibek.orders WHERE status='выполнен'")
+    completed_cnt = cur.fetchone()
+    cur.execute("SELECT AVG(CAST(NULLIF(total,'') AS INTEGER)) as aov FROM jibek.orders WHERE status='выполнен'")
+    aov = cur.fetchone()
     cur.execute('''SELECT r.*,u.name as user_name,s.name as shoe_name FROM jibek.reviews r
         LEFT JOIN jibek.users u ON r.user_id=u.id
         LEFT JOIN jibek.shoes s ON r.shoe_id=s.id ORDER BY r.id DESC''')
@@ -456,7 +464,9 @@ def admin():
         history[o['id']] = cur.fetchall()
     cur.close(); conn.close()
     return render_template('admin.html', shoes=shoes, orders=orders, users=users,
-                           revenue=revenue, new_cnt=new_cnt, reviews=reviews, history=history)
+                           revenue=revenue, new_cnt=new_cnt, processing_cnt=processing_cnt,
+                           delivery_cnt=delivery_cnt, completed_cnt=completed_cnt, aov=aov,
+                           reviews=reviews, history=history)
 
 @app.route('/admin/order/<int:oid>/status', methods=['POST'])
 def order_status(oid):

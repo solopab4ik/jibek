@@ -3,7 +3,8 @@
 {% block content %}
 <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
   <div><h1>Панель</h1><p>{{ session.admin }}</p></div>
-  <div style="display:flex;gap:10px">
+  <div style="display:flex;gap:10px;align-items:center">
+    <a href="/" class="btn btn-outline btn-sm">← В магазин</a>
     <a href="/admin/add" class="btn btn-dark">+ Товар</a>
     <a href="/admin/logout" class="btn btn-outline btn-sm">Выйти</a>
   </div>
@@ -34,6 +35,57 @@
   <div class="stat">
     <div class="stat-val">{{ reviews|length }}</div>
     <div class="stat-label">Отзывов</div>
+  </div>
+</div>
+
+<!-- ДЕТАЛЬНАЯ СТАТИСТИКА ЗАКАЗОВ -->
+<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:28px">
+  <h3 style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;margin-bottom:16px">Статистика заказов</h3>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:20px">
+    <div>
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:6px">Средний чек (выполненные)</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--gold)">{{ (aov.aov or 0)|int }} ₸</div>
+    </div>
+    <div>
+      <div style="font-size:.85rem;color:var(--muted);margin-bottom:6px">Конверсия выполнения</div>
+      <div style="font-size:1.8rem;font-weight:700;color:var(--gold)">
+        {% if orders|length > 0 %}
+          {{ ((completed_cnt.c / orders|length) * 100)|int }}%
+        {% else %}
+          0%
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div style="font-size:.85rem;font-weight:600;color:var(--muted);margin-bottom:8px">Распределение статусов заказов</div>
+  <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--border);margin-bottom:16px">
+    {% set total_orders = orders|length %}
+    {% if total_orders > 0 %}
+      <div style="width:{{ (new_cnt.c / total_orders * 100) }}%;background:#3b82f6" title="Новый: {{ new_cnt.c }}"></div>
+      <div style="width:{{ (processing_cnt.c / total_orders * 100) }}%;background:#f59e0b" title="Обработка: {{ processing_cnt.c }}"></div>
+      <div style="width:{{ (delivery_cnt.c / total_orders * 100) }}%;background:#a855f7" title="Доставка: {{ delivery_cnt.c }}"></div>
+      <div style="width:{{ (completed_cnt.c / total_orders * 100) }}%;background:#22c55e" title="Выполнен: {{ completed_cnt.c }}"></div>
+    {% endif %}
+  </div>
+  
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;font-size:.85rem">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#3b82f6"></span>
+      <span style="color:var(--muted)">Новые:</span> <strong>{{ new_cnt.c }}</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#f59e0b"></span>
+      <span style="color:var(--muted)">Обработка:</span> <strong>{{ processing_cnt.c }}</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#a855f7"></span>
+      <span style="color:var(--muted)">Доставка:</span> <strong>{{ delivery_cnt.c }}</strong>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#22c55e"></span>
+      <span style="color:var(--muted)">Выполненные:</span> <strong>{{ completed_cnt.c }}</strong>
+    </div>
   </div>
 </div>
 
