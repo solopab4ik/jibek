@@ -104,7 +104,7 @@
       <div>
         <div class="order-num">Заказ #{{ o.id }}</div>
         <div class="order-date">
-          {{ o.created_at[:16] }} · {{ o.user_email }}{% if o.user_name %} · {{ o.user_name }}{% endif %}
+          {{ (o.created_at|string)[:16] }} · {{ o.user_email }}{% if o.user_name %} · {{ o.user_name }}{% endif %}
         </div>
         {% if o.phone %}<div class="order-date">📞 {{ o.phone }}{% if o.city %} · 📍 {{ o.city }}{% endif %}</div>{% endif %}
       </div>
@@ -119,7 +119,7 @@
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <span style="font-size:.75rem;color:var(--muted);font-weight:600">История:</span>
       {% for h in history[o.id] %}
-        <span style="font-size:.72rem;color:var(--muted)">{{ h.status }} <span style="opacity:.5">{{ h.changed_at[:10] }}</span></span>
+        <span style="font-size:.72rem;color:var(--muted)">{{ h.status }} <span style="opacity:.5">{{ (h.changed_at|string)[:10] }}</span></span>
         {% if not loop.last %}<span style="color:var(--muted2)">→</span>{% endif %}
       {% endfor %}
     </div>
@@ -190,7 +190,7 @@
     <div class="order-header">
       <div>
         <div class="order-num">{{ r.user_name }}</div>
-        <div class="order-date">{{ r.created_at[:16] }}{% if r.shoe_name %} · <a href="/shoe/{{ r.shoe_id }}" style="color:var(--muted);text-decoration:none">{{ r.shoe_name }}</a>{% endif %}</div>
+        <div class="order-date">{{ (r.created_at|string)[:16] }}{% if r.shoe_name %} · <a href="/shoe/{{ r.shoe_id }}" style="color:var(--muted);text-decoration:none">{{ r.shoe_name }}</a>{% endif %}</div>
       </div>
       <div style="display:flex;align-items:center;gap:10px">
         <span style="color:#f59e0b;font-size:1rem">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</span>

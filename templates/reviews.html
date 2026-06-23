@@ -18,7 +18,7 @@
         {% if r.shoe_name %}
           <div class="order-date">о товаре: <a href="/shoe/{{ r.sid }}" style="color:var(--text);text-decoration:underline">{{ r.shoe_name }}</a></div>
         {% endif %}
-        <div class="order-date">{{ r.created_at[:10] }}</div>
+        <div class="order-date">{{ (r.created_at|string)[:10] }}</div>
       </div>
       <div style="color:#f59e0b;font-size:1.2rem">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</div>
     </div>

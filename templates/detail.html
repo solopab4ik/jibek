@@ -115,7 +115,7 @@
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <span style="font-weight:600">{{ r.user_name }}</span>
-          <span style="color:var(--muted);font-size:.8rem;margin-left:10px">{{ r.created_at[:10] }}</span>
+          <span style="color:var(--muted);font-size:.8rem;margin-left:10px">{{ (r.created_at|string)[:10] }}</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="color:#f59e0b">{{ '★' * r.rating }}{{ '☆' * (5 - r.rating) }}</span>
